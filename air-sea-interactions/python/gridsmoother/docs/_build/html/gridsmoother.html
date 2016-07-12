@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>gridsmoother &mdash; gridsmoother 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="gridsmoother 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to gridsmoother’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="Name of Module"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to gridsmoother’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to gridsmoother&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/gridsmoother.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="gridsmoother">
+<span id="id1"></span><h1>gridsmoother<a class="headerlink" href="#gridsmoother" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-gridsmoother"></span><p>A module to allow the smoothing of iris cubes based on real space properties rather than grid indices</p>
+<p>In this module:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#gridsmoother.GridSmoother" title="gridsmoother.GridSmoother"><tt class="xref py py-obj docutils literal"><span class="pre">GridSmoother</span></tt></a></li>
+</ul>
+</div></blockquote>
+<span class="target" id="module-gridsmoother"></span><p>A module to allow the smoothing of iris cubes based on real space properties rather than grid indices</p>
+<dl class="class">
+<dt id="gridsmoother.GridSmoother">
+<em class="property">class </em><tt class="descclassname">gridsmoother.</tt><tt class="descname">GridSmoother</tt><a class="headerlink" href="#gridsmoother.GridSmoother" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class to hold mapping information needed to perform smoothing</p>
+<dl class="method">
+<dt id="gridsmoother.GridSmoother.build">
+<tt class="descname">build</tt><big>(</big><em>source_cube</em>, <em>fn_of_sep</em>, <em>fn_cutoff=1e-05</em>, <em>metadata=None</em>, <em>quiet=True</em><big>)</big><a class="headerlink" href="#gridsmoother.GridSmoother.build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a structure for smoothing the data in a cube based on 
+spatial separation of grid points (in degrees) rather than on grid index</p>
+<p>Arguments:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>source_cube:</dt>
+<dd><p class="first last">an iris Cube from which to take the latitude and longitude coordinates</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>fn_of_sep:</dt>
+<dd><p class="first last">a function returning a value when given the separation in degrees of a great circle</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Keywords:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>fn_cutoff:</dt>
+<dd><p class="first last">minimum threshold for excluding points from mapping</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>metadata:</dt>
+<dd><p class="first last">dictionary of metadata to attach to the smoother</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Angular separation of pairs of points calculated using dot product of the two position vectors. 
+Expand position vectors in terms of latitude and longitude and assume all points are on Earth&#8217;s surface</p>
+<div class="math">
+\[\textbf{x} = R_E \left[\cos(lat_x)\cos(lon_x), \cos(lat_x)\sin(lon_x) , \sin(lat_x)  \right]\]</div>
+<p>Noting that <span class="math">\(\sin(90-lat) = \cos(lat)\)</span> and <span class="math">\(\cos(90-lat) = \sin(lat)\)</span>.</p>
+<p>The angle <span class="math">\(\alpha\)</span> between two such vectors <span class="math">\(\textbf{p}\)</span> and <span class="math">\(\textbf{q}\)</span> is therefore</p>
+<div class="math">
+\[\begin{split}\cos(\alpha) &amp;= \cos(lat_p)\cos(lat_q) \left[\cos(lon_p)\cos(lon_q) + \sin(lon_p)\sin(lon_p)\right] + \sin(lat_p)sin(lat_q) \\
+              &amp;= \cos(lat_p)\cos(lat_q) \cos(\Delta lon) + \sin(lat_p)\sin(lat_q)\end{split}\]</div>
+<p>where <span class="math">\(\Delta lon = lon_p - lon_q\)</span>.
+Smoothing coefficients are only computed and stored for a single longitude difference using the rotational symmetry of the model grid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gridsmoother.GridSmoother.load">
+<tt class="descname">load</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#gridsmoother.GridSmoother.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data into GridSmoother</p>
+<p>Arguments:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>filename:</dt>
+<dd><p class="first last">file to load from</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="gridsmoother.GridSmoother.save">
+<tt class="descname">save</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#gridsmoother.GridSmoother.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save GridSmoother data to a file</p>
+<p>Arguments:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>filename:</dt>
+<dd><p class="first last">filename to save to</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>The output file is written as a gzipped json structure.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gridsmoother.GridSmoother.smooth_2d_cube">
+<tt class="descname">smooth_2d_cube</tt><big>(</big><em>cube</em><big>)</big><a class="headerlink" href="#gridsmoother.GridSmoother.smooth_2d_cube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smooth a latitude-longitude cube</p>
+<p>Arguments:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>cube:</dt>
+<dd><p class="first last">Iris Cube to smooth. Must only have dimensions latitude-longitude</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns a copy of the cube with smoothed data and additional attributes 
+copied from the GridSmoother metadata dictionary.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to gridsmoother’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright Crown Copyright 2015.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

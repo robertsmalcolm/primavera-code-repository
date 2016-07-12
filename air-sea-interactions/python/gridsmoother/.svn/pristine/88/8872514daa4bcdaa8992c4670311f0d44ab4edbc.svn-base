@@ -1,0 +1,185 @@
+'''A module to allow the smoothing of iris cubes based on real space properties rather than grid indices '''
+
+import iris, numpy as np
+    
+class GridSmoother(object):
+    '''A class to hold mapping information needed to perform smoothing '''
+    def __init__(self):
+        '''Initialise smoother parameters'''
+    	self.lats = None
+        self.lons = None
+        self.shape= None
+        self.mapping_data = {}
+        self.metadata = {}
+
+    def build(self, source_cube, fn_of_sep, fn_cutoff = 1e-5, metadata={}, quiet = True):
+        '''Build a structure for smoothing the data in a cube based on 
+        spatial separation of grid points (in degrees) rather than on grid index
+        
+        Arguments:
+        
+        * source_cube:
+            an iris Cube from which to take the latitude and longitude coordinates
+        
+        * fn_of_sep:
+            a function returning a value when given the separation in degrees of a great circle
+        
+        Keywords:
+        
+        * fn_cutoff:
+            minimum threshold for excluding points from mapping
+        
+        * metadata:
+            dictionary of metadata to attach to the smoother
+        
+        '''
+        import itertools
+        
+        if not [coord.name() for coord in  source_cube.dim_coords] == ['latitude', 'longitude']:
+            raise Exception('GridSmoother needs to build from a latitude-longitude cube, but found:\n'+str(source_cube))
+        
+        self.lats = source_cube.coord('latitude').points
+        self.lons = source_cube.coord('longitude').points
+        
+        self.shape = source_cube.shape 
+        
+        if not isinstance(metadata,dict):
+            raise Exception("metadata keyword must be a dictionary, received %s" %type(metadata))
+        self.metadata.update(metadata)
+        
+        #for separation calculation need cos(lat), sin(lat) and cos(lon_1-lon_2)
+        clat = np.cos(np.deg2rad(self.lats))
+        slat = np.sin(np.deg2rad(self.lats))
+
+        dlon = np.median(self.lons[1:] - self.lons[:-1])
+        clon = np.cos(np.deg2rad(self.lons - dlon/2))
+        
+        #iterate over each latitude calculating the angular separation of two points. 
+        #Note that zonal symmetry means that data is not recomputed for each longitude
+        nlat,nlon = self.shape
+        temp_mapping_data = {i:[] for i in range(nlat)}
+        old_i = -1
+        for i,k,l in itertools.product(range(nlat),range(nlat),range(nlon)):
+            if not quiet and old_i != i:
+                print "Latitude %s of %s: %s" % ( i, nlat, self.lats[i])
+            if i==k and l==0:                   #don't waste time computing separation of a point from itself
+                ang_sep = 0.
+            else:
+                calpha = clat[i] * clat[k] * clon[-l] + slat[i] * slat[k]  # cosine of angle between vectors to each position
+                ang_sep = np.rad2deg(np.arccos(calpha.clip(-1.,1.)))  # clip cosine to range [-1,1] to avoid numerical trouble
+            point_weight = fn_of_sep(ang_sep)
+            if point_weight >= fn_cutoff:
+                temp_mapping_data[i].append((point_weight,(k,l)))
+            old_i = i
+        
+        #normalise weights
+        for i in range(nlat):
+            sum_of_weights = sum([weight for weight,_ in temp_mapping_data[i]])
+            tmp = {'weights':[], 'i_indices':[], 'j_indices':[]}
+            
+            for weight, point in temp_mapping_data[i]:
+                tmp['weights'].append(weight)
+                tmp['i_indices'].append(point[0])
+                tmp['j_indices'].append(point[1])
+                
+            tmp['weights']  = np.array(tmp['weights']) / sum_of_weights
+            tmp['i_indices'] = np.array(tmp['i_indices'])
+            tmp['j_indices'] = np.array(tmp['j_indices'])
+            self.mapping_data[i] = tmp
+            
+
+
+    def smooth_2d_cube(self, cube):
+        '''Smooth a latitude-longitude cube
+        
+        Arguments:
+        
+        * cube:
+            Iris Cube to smooth. Must only have dimensions latitude-longitude
+            
+        Returns a copy of the cube with smoothed data and additional attributes 
+        copied from the GridSmoother metadata dictionary.
+        '''
+        if not cube.shape == self.shape:
+            msg = 'Supplied cube shape is not the same as the shape of the cube that this GridSmoother was built for'
+            msg += "\n  GridSmoother.shape: %s\n  cube.shape: %s\n" %(self.shape, cube.shape)
+            raise Exception(msg)
+        
+        for coord,values in [('latitude', self.lats),('longitude', self.lons)]:
+            if not all(cube.coord(coord).points  == values):
+              raise Exception('%s points in GridSmoother and cube do not match' % coord)
+                
+        outcube = cube.copy()
+        outcube.data.fill(0.)
+        outcube.attributes.update(self.metadata)
+        
+        for lat_index,lat in enumerate(self.lats):
+            map_data = self.mapping_data[lat_index]
+            lon_indices = map_data['j_indices']
+            lat_indices = map_data['i_indices']
+            weights     = map_data['weights']
+            
+            for lon_index,lon in enumerate(self.lons):
+                lon_indices_temp = (lon_indices + lon_index) % self.shape[1]
+                outcube.data[lat_index,lon_index] = (cube.data[lat_indices, lon_indices_temp] * weights).sum()
+            
+        return outcube
+
+    def save(self,filename):
+        '''Save GridSmoother data to a file
+        
+        Arguments:
+        
+        * filename:
+            filename to save to
+        
+        The output file is written as a gzipped json structure.            
+        '''
+        import json,gzip
+        
+        outdata = {'metadata':     self.metadata,
+                   'latitudes':    self.lats.tolist(),
+                   'longitudes':   self.lons.tolist(),
+                   'shape':        self.shape,
+                   'mapping_data': []}
+	
+	for i in range(self.shape[0]):
+	    outdata['mapping_data'].append({key:val.tolist() for key,val in self.mapping_data[i].items()}) 
+
+        with gzip.open(filename,'w') as filehandle:
+            json.dump(outdata, filehandle, indent=2, sort_keys=True)
+
+    
+    def load(self,filename):
+        '''Load data into GridSmoother
+        
+        Arguments:
+        
+        * filename:
+            file to load from 
+        
+        '''
+        import json, gzip
+    
+        with gzip.open(filename,'r') as fh:
+            gs_data = json.load(fh)
+
+        self.metadata     = gs_data['metadata']
+        self.lats         = np.array(gs_data['latitudes'])
+        self.lons         = np.array(gs_data['longitudes'])
+        self.shape        = tuple(gs_data['shape'])
+        
+        if len(self.lats) != self.shape[0]:
+            raise Exception("shape[0] of source cube %s and length of latitudes array %s do not match" % (self.shape[0], len(self.lats)))
+        if len(self.lons) != self.shape[1]:
+            raise Exception("shape[1] of source cube %s and length of latitudes array %s do not match" % (self.shape[1], len(self.lons)))
+        
+        for k in ['weights', 'i_indices','j_indices']:
+            for i,_ in enumerate(self.lats):#range(self.shape[0]):
+                gs_data['mapping_data'][i][k] = np.array(gs_data['mapping_data'][i][k])
+                
+        self.mapping_data = gs_data['mapping_data']
+        
+        
+    
+        

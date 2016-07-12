@@ -1,0 +1,49 @@
+'''
+Created on Jul 15, 2015
+
+@author: hadmm
+'''
+import iris, os
+import iris.quickplot as qplt
+import matplotlib.pyplot as plt
+import gridsmoother
+import numpy as np 
+
+if __name__ == '__main__':
+    N216datadir = "/project/couplednwp/fra7/highres/orca025/daily/sst/"
+    
+    sst_field_2D = iris.load_cube(N216datadir+"sst_19860101.pp")
+    sst_field_2D.data = np.ma.masked_less(sst_field_2D.data, 288.) 
+    lat_width = 6.
+    lon_width = 18.
+    
+    print "box car parameters: lat_width %s, lon_width %s" % (lat_width, lon_width)
+    
+    gs = gridsmoother.GridSmoother()
+    filename= "boxcar_%s_x_%s.json.gz" % (lon_width,lat_width)
+    if os.path.exists(filename):
+        gs.load(filename)
+    else:
+        gs.build_boxcar_lat_lon(sst_field_2D, lat_width, lon_width)
+        gs.save(filename)
+    
+    smoothed_cube = gs.smooth_2d_cube(sst_field_2D)
+   
+    fig = plt.figure()
+    
+    for i,c in enumerate([sst_field_2D, smoothed_cube]):
+    
+        subpl = fig.add_subplot(221+i)
+        qplt.pcolormesh(c, vmin=250, vmax = 320)
+        plt.gca().coastlines()
+    
+    subpl = fig.add_subplot(221+i+1)
+    qplt.pcolormesh(sst_field_2D - smoothed_cube, vmin = -10, vmax = 10)
+    plt.gca().coastlines()
+    plt.show()
+    
+    sst_field_3D = iris.load_cube(N216datadir+"sst_1986010[12].pp")
+    smoothed_3D = gs.smooth_3d_cube(sst_field_3D)
+    print smoothed_3D
+    
+    
